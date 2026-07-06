@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-fs-bg: #09090b;
+  --color-fs-surface: #111118;
+  --color-fs-surface2: #1a1a24;
+  --color-fs-surface3: #22222e;
+  --color-fs-border: #27272f;
+  --color-fs-border-h: #353540;
+  --color-fs-accent: #8b5cf6;
+  --color-fs-accent10: rgba(139, 92, 246, 0.08);
+  --color-fs-accent20: rgba(139, 92, 246, 0.15);
+  --color-fs-accent-hover: #a78bfa;
+  --color-fs-accent-glow: rgba(139, 92, 246, 0.25);
+  --color-fs-text: #fafafa;
+  --color-fs-text2: #a1a1aa;
+  --color-fs-text3: #52525b;
+  --color-fs-danger: #ef4444;
+  --color-fs-danger10: rgba(239, 68, 68, 0.1);
+  --color-fs-success: #22c55e;
+  --color-fs-success10: rgba(34, 197, 94, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 15px; scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-fs-bg);
+  color: var(--color-fs-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -40%;
+  right: -20%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(139,92,246,0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -30%;
+  left: -15%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(139,92,246,0.02) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-fs-surface3); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-fs-border-h); }
