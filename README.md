@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FileSync — A premium dark-themed file manager
+
+A modern cloud storage UI built with Next.js, Tailwind CSS v4, Framer Motion, and Supabase.
+
+**Live demo:** [Coming soon]
+
+## Features
+
+- 🔐 Google Auth via Supabase
+- 📤 Drag & drop file uploads (with 50MB limit)
+- 🖼️ Image & PDF preview modal
+- 🔍 Real-time file search
+- 🏷️ File type breakdown with colored chips
+- 📊 Storage analytics dashboard
+- 🎨 Grid / List view toggle
+- 🔄 Animated progress bars & microinteractions
+- 🗂️ Category navigation (Images, Videos, Docs, etc.)
+- 🚨 Storage warning when >80% full
+- ✨ Framer Motion animations throughout
+
+## Tech Stack
+
+| What | Why |
+|------|-----|
+| **Next.js 14** | App Router, React 18 |
+| **Tailwind CSS v4** | Utility-first styling with `@theme` tokens |
+| **Framer Motion** | Spring animations, layout transitions |
+| **Supabase** | Auth + Storage backend |
+| **Lucide React** | Icon library |
+| **Geist Font** | System font by Vercel |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+git clone https://github.com/Phiraien/filesync-app
+cd filesync-app
+cp .env.local.example .env.local   # Add your Supabase keys
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a project at [supabase.com](https://supabase.com)
+2. Enable **Google Auth** in Authentication → Providers
+3. Create a storage bucket called `my-files` (public)
+4. Add `http://localhost:3000` to **Authentication → URL Configuration → Redirect URLs**
+5. Copy your project URL and anon key to `.env.local`
 
-## Learn More
+### Database (Row Level Security)
 
-To learn more about Next.js, take a look at the following resources:
+Run the SQL in `supabase-rls-policies.sql` in your Supabase SQL Editor to lock storage behind user authentication. This ensures users can only see and delete their own files.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/
+│   ├── globals.css       # Tailwind v4 import + custom theme tokens
+│   ├── layout.tsx        # Root layout (Geist font, CSS import)
+│   └── page.tsx          # Entry → renders AppShell
+├── components/
+│   └── AppShell.tsx      # The entire app in one file
+└── lib/
+    └── supabase.ts       # Supabase client singleton
+```
 
-## Deploy on Vercel
+## Design
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Dark theme inspired by Linear, Arc Browser, and Vercel Dashboard.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Background:** `#09090B`
+- **Surfaces:** `#111118` with subtle glassmorphism
+- **Accent:** `#8B5CF6` (Violet)
+- **Borders:** `#27272F`
+- **Text:** `#FAFAFA` / `#A1A1AA`
+
+Ambient radial gradient glows in the background. Everything at 200–300ms with spring easing.
+
+## License
+
+MIT
