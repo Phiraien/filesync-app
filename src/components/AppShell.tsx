@@ -134,23 +134,31 @@ export default function AppShell() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeNav, setActiveNav] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "name" | "size">("date");
+  const [userId, setUserId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* Auth */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s); setLoading(false);
+      setSession(s); 
+      setUserId(s?.user?.id ?? null);
+      setLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+      setUserId(s?.user?.id ?? null);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
   /* Files */
   const loadFiles = useCallback(async () => {
-    if (!session) return;
-    const { data } = await supabase.storage.from(BUCKET).list();
-    setFiles((data ?? []) as SupaFile[]);
-  }, [session]);
+    if (!session || !userId) return;
+    const { data, error } = await supabase.storage.from(BUCKET).list(userId, {
+      sortBy: { column: 'created_at', order: 'desc' },
+    });
+    if (!error) setFiles(((data ?? []) as SupaFile[]).map((f) => ({ ...f, name: f.name })));
+  }, [session, userId]);
   useEffect(() => { if (session) loadFiles(); }, [session, loadFiles]);
 
   /* Upload */
@@ -165,7 +173,8 @@ export default function AppShell() {
       }
       setProgress((p) => [...p, { name: file.name, status: "uploading", message: "Uploading…" }]);
       const cleanName = file.name.replace(/[^a-zA-Z0-9._\-\s]/g, "").trim();
-      const { error } = await supabase.storage.from(BUCKET).upload(cleanName, file, { upsert: true });
+      const filePath = `${userId}/${cleanName}`;
+      const { error } = await supabase.storage.from(BUCKET).upload(filePath, file, { upsert: true });
       setProgress((p) => p.map((pi) => pi.name === file.name ? {
         ...pi,
         status: error ? "fail" : "done",
@@ -180,9 +189,13 @@ export default function AppShell() {
 
   /* Delete */
   const deleteFile = async (name: string) => {
-    await supabase.storage.from(BUCKET).remove([name]);
+    await supabase.storage.from(BUCKET).remove([`${userId}/${name}`]);
     loadFiles();
   };
+
+  const getFileUrl = useCallback((name: string) => {
+    return supabase.storage.from(BUCKET).getPublicUrl(`${userId}/${name}`).data.publicUrl;
+  }, [userId]);
 
   /* Stats */
   const totalBytes = files.reduce((s, f) => s + (f.metadata?.size ?? 0), 0);
@@ -458,13 +471,13 @@ export default function AppShell() {
             ) : viewMode === "grid" ? (
               <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {filtered.map((file, idx) => (
-                  <FileCard key={file.name} file={file} idx={idx} onPreview={setPreviewFile} onDelete={deleteFile} getUrl={(n) => supabase.storage.from(BUCKET).getPublicUrl(n).data.publicUrl} />
+                  <FileCard key={file.name} file={file} idx={idx} onPreview={setPreviewFile} onDelete={deleteFile} getUrl={getFileUrl} />
                 ))}
               </motion.div>
             ) : (
               <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-1">
                 {filtered.map((file, idx) => (
-                  <FileRow key={file.name} file={file} idx={idx} onPreview={setPreviewFile} onDelete={deleteFile} getUrl={(n) => supabase.storage.from(BUCKET).getPublicUrl(n).data.publicUrl} />
+                  <FileRow key={file.name} file={file} idx={idx} onPreview={setPreviewFile} onDelete={deleteFile} getUrl={getFileUrl} />
                 ))}
               </motion.div>
             )}
@@ -484,14 +497,14 @@ export default function AppShell() {
               </div>
               <div className="flex-1 overflow-auto p-5 flex items-center justify-center min-h-[280px]">
                 {["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(previewFile.name.split(".").pop()?.toLowerCase() ?? "") ? (
-                  <img src={supabase.storage.from(BUCKET).getPublicUrl(previewFile.name).data.publicUrl} alt="" className="max-w-full max-h-[55vh] rounded-xl object-contain" />
+                  <img src={getFileUrl(previewFile.name)} alt="" className="max-w-full max-h-[55vh] rounded-xl object-contain" />
                 ) : previewFile.name.endsWith(".pdf") ? (
-                  <iframe src={supabase.storage.from(BUCKET).getPublicUrl(previewFile.name).data.publicUrl} className="w-full h-[55vh] rounded-xl border-none" />
+                  <iframe src={getFileUrl(previewFile.name)} className="w-full h-[55vh] rounded-xl border-none" />
                 ) : (
                   <div className="text-center text-fs-text3 text-sm">
                     <div className="w-16 h-16 rounded-2xl bg-fs-surface2 border border-fs-border flex items-center justify-center mx-auto mb-4"><FileText size={28} className="opacity-40" /></div>
                     <p className="mb-3 text-fs-text2 font-medium">Preview not available</p>
-                    <a href={supabase.storage.from(BUCKET).getPublicUrl(previewFile.name).data.publicUrl} download={previewFile.name} className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-fs-accent text-white text-sm font-semibold hover:bg-fs-accent-hover hover:shadow-lg hover:shadow-fs-accent/20 transition-all"><Download size={14} /> Download</a>
+                    <a href={getFileUrl(previewFile.name)} download={previewFile.name} className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-fs-accent text-white text-sm font-semibold hover:bg-fs-accent-hover hover:shadow-lg hover:shadow-fs-accent/20 transition-all"><Download size={14} /> Download</a>
                   </div>
                 )}
               </div>
